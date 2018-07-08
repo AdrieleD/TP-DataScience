@@ -318,6 +318,13 @@ adição do parâmetro ``low\_memory = False'' e a retirada do cabeçalho.
 \ImportTok{import}\NormalTok{ numpy }\ImportTok{as}\NormalTok{ np}
 \ImportTok{import}\NormalTok{ pandas }\ImportTok{as}\NormalTok{ pd}
 \ImportTok{import}\NormalTok{ matplotlib.pyplot }\ImportTok{as}\NormalTok{ plt}
+\ImportTok{import}\NormalTok{ matplotlib }
+\ImportTok{import}\NormalTok{ matplotlib }\ImportTok{as}\NormalTok{ mpl}
+\ImportTok{import}\NormalTok{ seaborn }\ImportTok{as}\NormalTok{ sns}
+\ImportTok{from}\NormalTok{ ipywidgets }\ImportTok{import}\NormalTok{ interact}
+\ImportTok{from}\NormalTok{ pylab }\ImportTok{import} \OperatorTok{*}
+\ImportTok{import}\NormalTok{ matplotlib.colors}
+\ImportTok{from}\NormalTok{ wordcloud }\ImportTok{import}\NormalTok{ WordCloud, STOPWORDS}
 \end{Highlighting}
 \end{Shaded}
 
@@ -604,22 +611,25 @@ melhor análise do atributo "Streams" em amostras menores.
 \end{Shaded}
 
     Com base nos agrupamentos realizados acima, pudemos gerar um gráfico
-apresentando um \emph{ranking} dos cinco meses com mais \emph{streams}.
+apresentando um \emph{ranking} dos meses com mais \emph{streams}.
 
     \begin{Shaded}
 \begin{Highlighting}[]
-    \CommentTok{#Ranking dos 5 meses com mais Streams}
+    \CommentTok{#Ranking dos meses com mais Streams}
+\NormalTok{    fig }\OperatorTok{=}\NormalTok{ gcf()}
+\NormalTok{    plt.style.use(}\StringTok{'seaborn-whitegrid'}\NormalTok{)}
 
-\NormalTok{meses_sum[}\StringTok{'Streams'}\NormalTok{].sort_values(ascending}\OperatorTok{=}\VariableTok{False}\NormalTok{).head().plot(kind}\OperatorTok{=}\StringTok{'bar'}\NormalTok{)}
-\NormalTok{plt.rcParams[}\StringTok{'figure.figsize'}\NormalTok{] }\OperatorTok{=}\NormalTok{ (}\DecValTok{4}\NormalTok{,}\DecValTok{2}\NormalTok{)}
-\NormalTok{plt.legend(loc}\OperatorTok{=}\StringTok{'upper right'}\NormalTok{, prop}\OperatorTok{=}\NormalTok{\{}\StringTok{'size'}\NormalTok{:}\DecValTok{10}\NormalTok{\}, fontsize}\OperatorTok{=}\DecValTok{5}\NormalTok{)}
-\NormalTok{plt.show()}
+\NormalTok{    meses_sum[}\StringTok{'Streams'}\NormalTok{].plot(kind}\OperatorTok{=}\StringTok{'bar'}\NormalTok{)}
+    \CommentTok{# plt.rcParams['figure.figsize'] = (4,2)}
+\NormalTok{    plt.legend(loc}\OperatorTok{=}\StringTok{'upper right'}\NormalTok{, prop}\OperatorTok{=}\NormalTok{\{}\StringTok{'size'}\NormalTok{:}\DecValTok{10}\NormalTok{\}, fontsize}\OperatorTok{=}\DecValTok{5}\NormalTok{)}
+\NormalTok{    plt.yscale(}\StringTok{'log'}\NormalTok{)}
+\NormalTok{    plt.show()}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}
 \centering
-\includegraphics{StreamsPorMes.png}
+\includegraphics{mesesMaisStreams.png}
 \caption{Streams por Mês}
 \end{figure}
 
@@ -657,7 +667,7 @@ respectivamente.
 \caption{Ranking dos 25 artistas mais acessados}
 \end{figure}
 
-\begin{Shaded}
+    \begin{Shaded}
 \begin{Highlighting}[]
 
 \CommentTok{#Ranking das 25 músicas mais acessadas}
@@ -738,59 +748,300 @@ leitura das datas, tornando o gráfico ilegível.
 representa o nome do cantor e o eixo y representa a track name, que
 seria o nome da música, sendo assim, gera uma relação que representa a
 música de cada cantor. Além disso foi representada uma outra camada de
-cor, através de um colorbar, que representa as Streamns, dessa forma,
+cor, através de um colorbar, que representa as Streams, dessa forma,
 mostra para nós uma análise das músicas mais tocadas de cada cantor.
 Essa análise é muito interessante pois se rodada com o dataset inteiro
-mostraria todas as músicas mais tocadas de todos os cantores.
+mostraria todas as músicas mais tocadas de todos os cantores. Para isso
+foi necessário agrupar os artistas e suas músicas para que não houvesse
+repetição, uma vez que uma música pode estar em mais posições no
+ranking, em dias e regiões distintas. Para uma melhor visualização dos
+dados, foram escolhidos somente os 50 mais bem colocados.
 
 \begin{Shaded}
 \begin{Highlighting}[]
 
-\CommentTok{#Ranking dos 50 musicas mais acessadas, com seus artistas}
-\NormalTok{artistas_mus }\OperatorTok{=}\NormalTok{ musicas.groupby([}\StringTok{'Artist'}\NormalTok{, }\StringTok{'TrackName'}\NormalTok{])}
-\NormalTok{artistas_mus }\OperatorTok{=}\NormalTok{ artistas_mus.Streams.}\BuiltInTok{sum}\NormalTok{()}
-\NormalTok{artistas_mus}
-\CommentTok{#Cria um novo dataframe para manipulação}
-\NormalTok{artistas_musf}\OperatorTok{=}\NormalTok{pd.DataFrame(artistas_mus)}
-\NormalTok{artistas_musf }\OperatorTok{=}\NormalTok{ artistas_musf.Streams.sort_values(ascending}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
-\NormalTok{artistas_musf }\OperatorTok{=}\NormalTok{ artistas_musf[:}\DecValTok{50}\NormalTok{]}
-\NormalTok{art }\OperatorTok{=}\NormalTok{ artistas_musf.reset_index()}
-\NormalTok{art}
+    \CommentTok{#Ranking dos 50 musicas mais acessadas, com seus artistas}
+\NormalTok{    artistas_mus }\OperatorTok{=}\NormalTok{ musicas.groupby([}\StringTok{'Artist'}\NormalTok{, }\StringTok{'TrackName'}\NormalTok{])}
+\NormalTok{    artistas_mus }\OperatorTok{=}\NormalTok{ artistas_mus.Streams.}\BuiltInTok{sum}\NormalTok{()}
+\NormalTok{    artistas_mus}
+    \CommentTok{#Cria um novo dataframe para manipulação}
+\NormalTok{    artistas_musf}\OperatorTok{=}\NormalTok{pd.DataFrame(artistas_mus)}
+\NormalTok{    artistas_musf }\OperatorTok{=}\NormalTok{ artistas_musf.Streams.sort_values(ascending}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
+\NormalTok{    artistas_musf }\OperatorTok{=}\NormalTok{ artistas_musf[:}\DecValTok{50}\NormalTok{]}
+\NormalTok{    art }\OperatorTok{=}\NormalTok{ artistas_musf.reset_index()}
+\NormalTok{    art}
 
-\NormalTok{fig }\OperatorTok{=}\NormalTok{ gcf()}
-\NormalTok{ax }\OperatorTok{=}\NormalTok{ fig.gca()}
-\NormalTok{plt.style.use(}\StringTok{'seaborn-poster'}\NormalTok{)}
+\NormalTok{    fig }\OperatorTok{=}\NormalTok{ gcf()}
+\NormalTok{    ax }\OperatorTok{=}\NormalTok{ fig.gca()}
+\NormalTok{    plt.style.use(}\StringTok{'seaborn-poster'}\NormalTok{)}
 
-\NormalTok{X }\OperatorTok{=}\NormalTok{ art[}\StringTok{'Artist'}\NormalTok{]}
-\NormalTok{Y }\OperatorTok{=}\NormalTok{ art[}\StringTok{'TrackName'}\NormalTok{]}
-\NormalTok{C }\OperatorTok{=}\NormalTok{ art[}\StringTok{'Streams'}\NormalTok{]}
+\NormalTok{    X }\OperatorTok{=}\NormalTok{ art[}\StringTok{'Artist'}\NormalTok{]}
+\NormalTok{    Y }\OperatorTok{=}\NormalTok{ art[}\StringTok{'TrackName'}\NormalTok{]}
+\NormalTok{    C }\OperatorTok{=}\NormalTok{ art[}\StringTok{'Streams'}\NormalTok{]}
 
-\NormalTok{plt.rcParams[}\StringTok{'figure.figsize'}\NormalTok{] }\OperatorTok{=}\NormalTok{ (}\DecValTok{100}\NormalTok{,}\DecValTok{50}\NormalTok{)}
+\NormalTok{    plt.rcParams[}\StringTok{'figure.figsize'}\NormalTok{] }\OperatorTok{=}\NormalTok{ (}\DecValTok{80}\NormalTok{,}\DecValTok{25}\NormalTok{)}
 
-\CommentTok{#cmap = mpl.colors.ListedColormap([ 'tab:red', 'tab:orange',  'tab:red'])}
-
-
-\NormalTok{s }\OperatorTok{=}\NormalTok{ ax.scatter(X,Y,c}\OperatorTok{=}\NormalTok{C,lw}\OperatorTok{=}\FloatTok{0.3}\NormalTok{, s}\OperatorTok{=}\DecValTok{500}\NormalTok{, alpha}\OperatorTok{=}\FloatTok{0.5}\NormalTok{,  cmap}\OperatorTok{=}\StringTok{'autumn'}\NormalTok{) }\CommentTok{#plasma,hsv  'viridis', 'plasma', 'inferno', 'magma', 'cividis', 'autumn']}
-
-\NormalTok{plt.title(}\StringTok{'Gráfico de artistas por Track name em função das streams.'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'22'}\NormalTok{)}
-\NormalTok{plt.ylabel(}\StringTok{'Track Name'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'14'}\NormalTok{)}
-\NormalTok{plt.xlabel(}\StringTok{'Artist'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'14'}\NormalTok{)}
+\NormalTok{    cmap }\OperatorTok{=}\NormalTok{ mpl.colors.ListedColormap([ }\StringTok{'blue'}\NormalTok{, }\StringTok{'orange'}\NormalTok{,  }\StringTok{'red'}\NormalTok{])}
 
 
-\CommentTok{#norm = mpl.colors.Normalize(vmin=1, vmax=20)}
-\NormalTok{cb }\OperatorTok{=}\NormalTok{ plt.colorbar(s)}
+\NormalTok{    s }\OperatorTok{=}\NormalTok{ ax.scatter(X,Y,c}\OperatorTok{=}\NormalTok{C,lw}\OperatorTok{=}\FloatTok{0.3}\NormalTok{, s}\OperatorTok{=}\DecValTok{500}\NormalTok{, cmap}\OperatorTok{=}\NormalTok{cmap) }\CommentTok{#plasma,hsv  'viridis', 'plasma', 'inferno', 'magma', 'cividis', 'autumn']}
 
-\NormalTok{cb.set_label(}\StringTok{'Streams'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'14'}\NormalTok{)}
+\NormalTok{    plt.title(}\StringTok{'Gráfico de artistas por Track name em função das streams.'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'50'}\NormalTok{)}
+\NormalTok{    plt.ylabel(}\StringTok{'Track Name'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'50'}\NormalTok{)}
+\NormalTok{    plt.xlabel(}\StringTok{'Artist'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'50'}\NormalTok{)}
 
 
-\CommentTok{#plt.savefig('ArtistasPorStreamsCores.png') }
+    \CommentTok{#norm = mpl.colors.Normalize(vmin=1, vmax=20)}
+\NormalTok{    cb }\OperatorTok{=}\NormalTok{ plt.colorbar(s)}
+
+\NormalTok{    cb.set_label(}\StringTok{'Streams'}\NormalTok{, fontsize}\OperatorTok{=}\StringTok{'50'}\NormalTok{)}
+
+
+    \CommentTok{#plt.savefig('ArtistasPorStreamsCores.png') )  }
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}
 \centering
-\includegraphics{ArtistasPorStreamsCor.png}
+\includegraphics{ArtistasPorStreamsCores.png}
 \caption{Gráfico de Dispersão - Artistas por Streams}
+\end{figure}
+
+    Para a quarta parte deste trabalho, foram feitas alterações no código
+das etapas anteriores. Dois gráficos foram modificados: O gráfico de
+ranking dos 5 meses com mais Streams, que o mesmo agora apresenta todos
+os meses do ano, e o gráfico de cores que o mesmo antes possuía cores
+muito claras difíceis de serem analisadas, o gráfico de cores agora
+possui cores de fácil identificação e estilo de gráfico com linhas
+tornando a sua análise mais clara.
+
+    A fim de clusterizar os artistas que mais apareceram no ranking,
+utilizamos o mesmo dataset utilizado no gráfico anterior, porémm sem
+realizar uma especificação dos dados. Desta forma, utilizando os nomes
+dos artistas e a quantidade de vezes em que o mesmo apareceu em uma
+posição do ranking, podemos analisar, então, quais os artistas que
+possuem mais musicas no ranking, em comparação com outros artistas. Para
+realizar esta análise, utilizamos um algoritmo de WordCloud, que
+posiciona e representa palavras se acordo com a quantidade de vezes em
+que esta aparece. Com base nos resultados obtidos, verificamos que
+alguns artistas que anteriormente não apareciam no topo do ranking foram
+bem colocados pelo algoritmo de clusterização. Isto pode ter acontecido
+porque tais artistas possuem mais músicas no ranking, apesar de estas
+não possuírem tantos acessos. Em contrapartida, alguns artistas bem
+colocados anteriormente não se sobressaíram desta vez por não possuírem
+tantas músicas no ranking.
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    teste}\OperatorTok{=}\NormalTok{pd.DataFrame(artistas_mus)}
+\NormalTok{    teste }\OperatorTok{=}\NormalTok{ teste.Streams.sort_values(ascending}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
+\NormalTok{    teste }\OperatorTok{=}\NormalTok{ teste.reset_index()}
+\NormalTok{    teste}
+
+\NormalTok{    comment_words }\OperatorTok{=} \StringTok{' '}
+    \ControlFlowTok{for}\NormalTok{ val }\KeywordTok{in}\NormalTok{ teste.Artist:}
+\NormalTok{        comment_words }\OperatorTok{=}\NormalTok{ comment_words }\OperatorTok{+}\NormalTok{ val }\OperatorTok{+} \StringTok{' '}
+
+\NormalTok{    stopwords }\OperatorTok{=} \BuiltInTok{set}\NormalTok{(STOPWORDS)}
+\NormalTok{    wordcloud }\OperatorTok{=}\NormalTok{ WordCloud(width }\OperatorTok{=} \DecValTok{800}\NormalTok{, height }\OperatorTok{=} \DecValTok{800}\NormalTok{,}
+\NormalTok{                    background_color }\OperatorTok{=}\StringTok{'white'}\NormalTok{,}
+\NormalTok{                    stopwords }\OperatorTok{=}\NormalTok{ stopwords,}
+\NormalTok{                    min_font_size }\OperatorTok{=} \DecValTok{10}\NormalTok{).generate(comment_words)}
+
+    \CommentTok{# plot the WordCloud image                       }
+\NormalTok{    plt.figure(figsize }\OperatorTok{=}\NormalTok{ (}\DecValTok{8}\NormalTok{, }\DecValTok{8}\NormalTok{), facecolor }\OperatorTok{=} \VariableTok{None}\NormalTok{)}
+\NormalTok{    plt.imshow(wordcloud)}
+\NormalTok{    plt.axis(}\StringTok{"off"}\NormalTok{)}
+\NormalTok{    plt.tight_layout(pad }\OperatorTok{=} \DecValTok{0}\NormalTok{)}
+
+\NormalTok{    plt.show()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{wordcloud.png}
+\caption{Nuvem de Palavras - Artistas}
+\end{figure}
+
+    Nesta etapa, foi difícil a escolha dos features e de como iríamos
+utilizá-los pois no nosso dataset temos somente as seguintes colunas:
+'Position', 'TrackName', 'Streams', 'URL', 'Date' e 'Artist'. Destas
+colunas, apenas Streams e Position são atributos numéricos sendo o
+restante strings. Além disso, TrackName e Streams possuem Strings que
+têm mais de 50 caracteres quase formando uma frase, o que pode até ser
+observado nos gráficos já formados nas análises anteriores, o que de
+certa forma, dificulta a conversão para outros tipos.
+
+    A primeira tentativa foi a conversão comum dos atributos de texto em
+floats através de parser, o que não funcionou pelos nomes serem muito
+grandes e sempre ultrapassarem o tamanho limite esperado de qualquer
+tipo de conversão. Com isso, o que foi feito, foi a utilização do
+oneHotEncoder para poder codificar as Strings para números inteiros a
+fim de utilizá-las nas análises de predição em códigos como o KNN,
+árvore de predição e Naive Bayes. Segue abaixo as etapas necessárias
+para a aplicaçã do método citado anteriormente, para converter o
+atributo "Region" em inteiro.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    dados }\OperatorTok{=}\NormalTok{ paises_sum[}\StringTok{'Streams'}\NormalTok{]}
+\NormalTok{    dados }\OperatorTok{=}\NormalTok{ pd.DataFrame(data}\OperatorTok{=}\NormalTok{dados)}
+\NormalTok{    paises_sum}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    nomes_paises_aux }\OperatorTok{=}\NormalTok{ musicas.drop([}\StringTok{'Position'}\NormalTok{, }\StringTok{'TrackName'}\NormalTok{, }\StringTok{'Streams'}\NormalTok{, }\StringTok{'URL'}\NormalTok{, }\StringTok{'Date'}\NormalTok{, }\StringTok{'Days'}\NormalTok{, }\StringTok{'Year'}\NormalTok{, }\StringTok{'Month'}\NormalTok{, }\StringTok{'Artist'}\NormalTok{], axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
+\NormalTok{    nomes_paises_aux }\OperatorTok{=}\NormalTok{ unique(nomes_paises_aux)}
+\NormalTok{    nomes_paises }\OperatorTok{=}\NormalTok{ pd.DataFrame(data}\OperatorTok{=}\NormalTok{nomes_paises_aux)}
+\NormalTok{    nomes_paises}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \ImportTok{from}\NormalTok{ sklearn.preprocessing }\ImportTok{import}\NormalTok{ LabelEncoder}
+\NormalTok{    enc }\OperatorTok{=}\NormalTok{ LabelEncoder()}
+
+\NormalTok{    region_integer }\OperatorTok{=}\NormalTok{ enc.fit_transform(nomes_paises[}\DecValTok{0}\NormalTok{])}
+\NormalTok{    nomes_paises[}\StringTok{'RegionInteger'}\NormalTok{] }\OperatorTok{=}\NormalTok{ region_integer}
+    \CommentTok{#nomes_paises['nomes2'] = pd.to_numeric(nomes_paises[0], errors='coerce')}
+\NormalTok{    nomes_paises}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    nomes_paises_teste }\OperatorTok{=}\NormalTok{ nomes_paises}
+\NormalTok{    nomes_paises_teste[}\StringTok{'Streams'}\NormalTok{] }\OperatorTok{=}\NormalTok{ unique(paises_sum[}\StringTok{'Streams'}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \ImportTok{from}\NormalTok{ sklearn.preprocessing }\ImportTok{import}\NormalTok{ OneHotEncoder}
+
+\NormalTok{    ohe }\OperatorTok{=}\NormalTok{ OneHotEncoder()}
+\NormalTok{    dataset_array }\OperatorTok{=}\NormalTok{ nomes_paises_teste.values}
+\NormalTok{    region_integer }\OperatorTok{=}\NormalTok{ region_integer.reshape(}\BuiltInTok{len}\NormalTok{(region_integer),}\DecValTok{1}\NormalTok{)}
+\NormalTok{    novas_features }\OperatorTok{=}\NormalTok{ ohe.fit_transform(region_integer)}
+
+\NormalTok{    nomes_paises }\OperatorTok{=}\NormalTok{ np.concatenate([nomes_paises_teste, novas_features.toarray()], axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
+\NormalTok{    nomes_paises.shape}
+\NormalTok{    dataf }\OperatorTok{=}\NormalTok{ pd.DataFrame(nomes_paises_teste)}
+\NormalTok{    dataf.head()}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \ImportTok{from}\NormalTok{ sklearn.model_selection }\ImportTok{import}\NormalTok{ train_test_split}
+
+
+\NormalTok{    X_train,X_test,Y_train,Y_test }\OperatorTok{=}\NormalTok{ train_test_split(}
+\NormalTok{        nomes_paises_teste[}\StringTok{u'RegionInteger'}\NormalTok{].reshape((}\BuiltInTok{len}\NormalTok{(nomes_paises_teste[}\StringTok{'RegionInteger'}\NormalTok{]), }\DecValTok{1}\NormalTok{)), }
+\NormalTok{        nomes_paises_teste[}\StringTok{u'Streams'}\NormalTok{], }
+\NormalTok{        test_size}\OperatorTok{=}\FloatTok{0.2}\NormalTok{, random_state}\OperatorTok{=}\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \ImportTok{from}\NormalTok{ sklearn.metrics }\ImportTok{import}\NormalTok{ precision_recall_fscore_support}
+    \CommentTok{#KNN}
+    \ImportTok{from}\NormalTok{ sklearn.neighbors }\ImportTok{import}\NormalTok{ KNeighborsClassifier}
+\NormalTok{    knn }\OperatorTok{=}\NormalTok{ KNeighborsClassifier()}
+\NormalTok{    knn.fit(X_train, Y_train)}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"Acurácia = }\SpecialCharTok{\{0\}}\StringTok{%"}\NormalTok{.}\BuiltInTok{format}\NormalTok{(}\DecValTok{100}\OperatorTok{*}\NormalTok{np.}\BuiltInTok{sum}\NormalTok{(knn.predict(X_test) }\OperatorTok{==}\NormalTok{ Y_test)}\OperatorTok{/}\BuiltInTok{len}\NormalTok{(Y_test)))}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"(Precisão, Recall, FScore)"}\NormalTok{)}
+\NormalTok{    precision_recall_fscore_support(Y_test, knn.predict(X_test), average}\OperatorTok{=}\VariableTok{None}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{#Arvore de Decisão}
+    \ImportTok{from}\NormalTok{ sklearn }\ImportTok{import}\NormalTok{ tree}
+\NormalTok{    arv }\OperatorTok{=}\NormalTok{ tree.DecisionTreeClassifier()}
+\NormalTok{    arv }\OperatorTok{=}\NormalTok{ arv.fit(X_train, Y_train)}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"Acurácia = }\SpecialCharTok{\{0\}}\StringTok{%"}\NormalTok{.}\BuiltInTok{format}\NormalTok{(}\DecValTok{100}\OperatorTok{*}\NormalTok{np.}\BuiltInTok{sum}\NormalTok{(arv.predict(X_test) }\OperatorTok{==}\NormalTok{ Y_test)}\OperatorTok{/}\BuiltInTok{len}\NormalTok{(Y_test)))}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"(Precisão, Recall, FScore)"}\NormalTok{)}
+\NormalTok{    precision_recall_fscore_support(Y_test, arv.predict(X_test), average}\OperatorTok{=}\VariableTok{None}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{#Naive Bayes}
+    \ImportTok{from}\NormalTok{ sklearn.naive_bayes }\ImportTok{import}\NormalTok{ GaussianNB}
+\NormalTok{    clf }\OperatorTok{=}\NormalTok{ GaussianNB()}
+\NormalTok{    clf.fit(X_train, Y_train)}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"Acurácia = }\SpecialCharTok{\{0\}}\StringTok{%"}\NormalTok{.}\BuiltInTok{format}\NormalTok{(}\DecValTok{100}\OperatorTok{*}\NormalTok{np.}\BuiltInTok{sum}\NormalTok{(clf.predict(X_test) }\OperatorTok{==}\NormalTok{ Y_test)}\OperatorTok{/}\BuiltInTok{len}\NormalTok{(Y_test)))}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"(Precisão, Recall, FScore)"}\NormalTok{)}
+\NormalTok{    precision_recall_fscore_support(Y_test, clf.predict(X_test), average}\OperatorTok{=}\VariableTok{None}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+    O que se notou é que, mesmo após a conversão das Strings para inteiros,
+o resultado de ambos os algoritmos supervisionados citados acima deu 0
+(Zero). Tanto na acurácia, quanto no recall, average e precisão. Esse
+resultado pode ter sido obtido pelo fato das variáveis escolhidas no set
+de treinamento e teste, que pode terem sido escolhidas de maneira
+equivocada e como não foram bem relacionadas obtiveram resultado 0, ou
+simplesmente houve um erro de correlacionamento. As variáveis escolhidas
+foi o número de Streams por Região o que faria sentido pois indicaria
+qual região seria a mais acessada de acordo com o número de Streams.
+
+    E por fim fizemos uma análise, utilizando o algoritmo não-supervisionado
+K-Means, que já nos retornou um resultado melhor que os obtidos
+anteriormente. Como podemos ver abaixo, ele conseguiu classificar de
+acordo com as "Streams" e "Region", mesmos parâmetros utilizados
+anteriormente, de forma mais clara.
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{#K-Means}
+    \ImportTok{from}\NormalTok{ sklearn }\ImportTok{import}\NormalTok{ cluster}
+\NormalTok{    k_means }\OperatorTok{=}\NormalTok{ cluster.KMeans(n_clusters }\OperatorTok{=} \DecValTok{2}\NormalTok{)}
+\NormalTok{    k_means.fit(nomes_paises_teste[[}\StringTok{'RegionInteger'}\NormalTok{,}\StringTok{'Streams'}\NormalTok{]])}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+    \BuiltInTok{print}\NormalTok{(k_means.cluster_centers_)}
+\NormalTok{    consumo_df }\OperatorTok{=}\NormalTok{ nomes_paises_teste.groupby(}\StringTok{'Streams'}\NormalTok{)}\OperatorTok{\textbackslash{}}
+\NormalTok{        [[}\StringTok{'RegionInteger'}\NormalTok{, }\StringTok{'Streams'}\NormalTok{]].mean()}
+\NormalTok{    consumo_df}
+\end{Highlighting}
+\end{Shaded}
+
+    \begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    plt.figure(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{14}\NormalTok{,}\DecValTok{7}\NormalTok{))}
+
+\NormalTok{    colormap}\OperatorTok{=}\NormalTok{ np.array([}\StringTok{'red'}\NormalTok{, }\StringTok{'lime'}\NormalTok{])}
+
+    \CommentTok{#Real}
+\NormalTok{    plt.subplot(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{    plt.scatter(nomes_paises_teste[}\StringTok{'RegionInteger'}\NormalTok{], nomes_paises_teste[}\StringTok{'Streams'}\NormalTok{], c}\OperatorTok{=}\NormalTok{colormap, s}\OperatorTok{=}\DecValTok{40}\NormalTok{)}
+\NormalTok{    plt.title(}\StringTok{'Classificação Real'}\NormalTok{)}
+
+    \CommentTok{#K-Means}
+\NormalTok{    plt.subplot(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    plt.scatter(nomes_paises_teste[}\StringTok{'RegionInteger'}\NormalTok{], nomes_paises_teste[}\StringTok{'Streams'}\NormalTok{], c}\OperatorTok{=}\NormalTok{colormap[k_means.labels_], s}\OperatorTok{=}\DecValTok{40}\NormalTok{)}
+\NormalTok{    plt.title(}\StringTok{'Classificação K-Means'}\NormalTok{)}
+\NormalTok{    plt.savefig(}\StringTok{'kmeans.png'}\NormalTok{)}
+\NormalTok{    plt.show()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{kmeans.png}
+\caption{K-Means - Streams por Região}
 \end{figure}
 
 
